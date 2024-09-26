@@ -15,8 +15,17 @@ class GrammarCorrectorAPI:
         self.rate_limiter = AsyncLimiter(rate_limit, rate_period)
         self.max_retries = 5
         self.backoff_factor = 2
-    
-    async def correct_paragraphs(self, paragraphs, total_token_limit, progress_callback):
+
+    async def correct_paragraphs(self, paragraphs, total_token_limit, progress_callback, prompt_template):
+        """
+        Corrects multiple paragraphs using a provided prompt template.
+
+        :param paragraphs: List of paragraph texts to correct.
+        :param total_token_limit: Maximum total tokens allowed for processing.
+        :param progress_callback: Callback function to update progress.
+        :param prompt_template: Template string for the prompt with placeholders.
+        :return: Tuple of (corrected_paragraphs, unprocessed_paragraphs)
+        """
         corrected = []
         unprocessed = []
         async with aiohttp.ClientSession() as session:
@@ -26,39 +35,36 @@ class GrammarCorrectorAPI:
                 if tokens_processed + tokens > total_token_limit:
                     unprocessed.append(para)
                     continue
-                corrected_text, tokens = await self.correct_text(session, para, tokens_processed)
+
+                # Format the prompt with the current paragraph and language variant
+                prompt = prompt_template.format(text=para, language_variant=self.language_variant)
+
+                corrected_text, tokens_corrected = await self.correct_text(session, para, tokens_processed, prompt)
                 corrected.append(corrected_text)
-                tokens_processed += tokens
+                tokens_processed += tokens_corrected
+
                 if progress_callback:
-                    progress_callback(tokens)
+                    progress_callback(tokens_corrected)
         return corrected, unprocessed
 
-    
-    async def correct_text(self, session, text, tokens_processed, retry_count=0):
+    async def correct_text(self, session, text, tokens_processed, prompt, retry_count=0):
+        """
+        Corrects a single paragraph using a custom prompt.
+
+        :param session: aiohttp ClientSession.
+        :param text: Paragraph text to correct.
+        :param tokens_processed: Tokens processed so far.
+        :param prompt: Custom prompt for the text.
+        :param retry_count: Current retry attempt.
+        :return: Tuple of (corrected_text, tokens_corrected)
+        """
         # Check cache
         cache_key = f"{text}_{self.language_variant}"
         cached_result = get_from_cache(cache_key)
         if cached_result:
             logger.info(f"Cache hit for paragraph.")
             return cached_result, count_tokens(cached_result, self.model)
-    
-        # Prepare the prompt
-        prompt = f"""You are an expert proofreader and editor, highly skilled in {self.language_variant} grammar, spelling, and style. Your task is to correct the following text, ensuring it adheres to {self.language_variant} conventions. Please follow these guidelines:
-    
-1. Correct any grammatical errors and spelling mistakes.
-2. Maintain the original tone and style of the text.
-3. Ensure clarity, coherence, consistency, and correctness throughout the text.
-4. Ensure proper punctuation and capitalization.
-5. Do not add or remove information; focus only on language correction.
-6. If the text is already correct, simply return it unchanged.
-7. Ensure that only the corrected text is returned without any additional commentary, explanations, or quotation marks.
-    
-Original Text:
-{text}
-    
-Corrected Text:
-"""
-    
+
         try:
             async with self.rate_limiter:
                 headers = {
@@ -68,12 +74,14 @@ Corrected Text:
                 payload = {
                     "model": self.model,  # Use selected model
                     "messages": [
-                        {"role": "system", "content": f"You are a helpful assistant specialized in {self.language_variant} grammar and spelling correction."},
+                        {"role": "system", "content": "You are a helpful assistant."},
                         {"role": "user", "content": prompt}
                     ],
                     "temperature": 0.3,
                     "max_tokens": 1000,  # Adjust as needed
-                    "n": 1,
+                    "top_p": 1,
+                    "frequency_penalty": 0,
+                    "presence_penalty": 0
                 }
                 async with session.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload) as response:
                     if response.status == 429:
@@ -81,7 +89,7 @@ Corrected Text:
                             wait_time = self.backoff_factor ** retry_count
                             logger.warning(f"Rate limit hit. Retrying in {wait_time} seconds...")
                             await asyncio.sleep(wait_time)
-                            return await self.correct_text(session, text, tokens_processed, retry_count + 1)
+                            return await self.correct_text(session, text, tokens_processed, prompt, retry_count + 1)
                         else:
                             logger.error("Max retries exceeded. Returning original text.")
                             return text, count_tokens(text, self.model)
@@ -90,14 +98,14 @@ Corrected Text:
                         error_message = result.get("error", {}).get("message", "Unknown error.")
                         logger.error(f"API Error: {error_message}")
                         return text, count_tokens(text, self.model)
-    
+
                     result = await response.json()
                     corrected_text = result['choices'][0]['message']['content'].strip()
-    
+
         except Exception as e:
             logger.error(f"An error occurred during text correction: {e}")
             return text, count_tokens(text, self.model)  # Return original text on error
-    
+
         # Save to cache
         save_to_cache(cache_key, corrected_text)
         logger.info("Paragraph corrected successfully.")

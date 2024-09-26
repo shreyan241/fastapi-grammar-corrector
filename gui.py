@@ -1,5 +1,6 @@
 # gui.py
 
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import threading
@@ -9,21 +10,44 @@ from text_processing import split_into_paragraphs
 from file_handlers import extract_text
 from output_manager import save_corrected_document
 from cache_manager import clear_cache
-import os
+from document_types import DOCUMENT_TYPES
+from prompts import DOCUMENT_PROMPTS
 from utils import count_tokens
 from loguru import logger
+
+
+class ScrollableFrame(ttk.Frame):
+    """
+    A scrollable frame that can contain multiple widgets.
+    """
+    def __init__(self, container, *args, **kwargs):
+        super().__init__(container, *args, **kwargs)
+        
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        self.scrollable_frame = ttk.Frame(canvas)
+        
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+        
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
 
 class GrammarCorrectorGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Grammar Corrector")
-        self.root.geometry("900x800")  # Set window size at the start
+        self.root.geometry("1200x800")  # Adjusted height to accommodate scroll
         self.root.resizable(True, True)  # Allow window to be resizable
-        
-        # Configure grid weights for responsiveness
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
         
         # Initialize variables
         self.input_file_path = tk.StringVar()
@@ -31,6 +55,7 @@ class GrammarCorrectorGUI:
         self.language_variant = tk.StringVar(value="British English")
         self.api_key = tk.StringVar()
         self.model_choice = tk.StringVar(value="gpt-4o-mini")  # Model selection variable
+        self.document_type = tk.StringVar(value="Legal Document")  # Document type variable
         self.total_tokens = tk.IntVar(value=0)  # Total tokens in file
         self.max_total_tokens = tk.IntVar(value=0)  # Max token limit based on model
         self.paragraphs = []
@@ -38,93 +63,116 @@ class GrammarCorrectorGUI:
         self.select_all_var = tk.BooleanVar(value=False)
         self.selected_tokens = tk.IntVar(value=0)
         
+        # Dictionary to hold current prompts (can be modified by the user)
+        self.current_prompts = DOCUMENT_PROMPTS.copy()
+        
         # Set up the GUI components
         self.setup_gui()
         # Initialize max_total_tokens based on the default model
         self.update_max_tokens_limit()
         
     def setup_gui(self):
-        # Create a main frame
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky="NSEW")
-        
-        # Configure grid weights for the main frame
-        for i in range(11):
-            main_frame.grid_rowconfigure(i, weight=0)
-        main_frame.grid_rowconfigure(10, weight=1)  # Allow the listbox to expand
-        main_frame.grid_columnconfigure(1, weight=1)
+        # Create a scrollable main frame
+        main_frame = ScrollableFrame(self.root, padding="10")
+        main_frame.pack(fill="both", expand=True)
         
         padding_options = {'padx': 5, 'pady': 5}
         
         # Input File Selection
-        ttk.Label(main_frame, text="Input File:").grid(row=0, column=0, sticky='W', **padding_options)
-        input_entry = ttk.Entry(main_frame, textvariable=self.input_file_path, width=70)
+        ttk.Label(main_frame.scrollable_frame, text="Input File:").grid(row=0, column=0, sticky='W', **padding_options)
+        input_entry = ttk.Entry(main_frame.scrollable_frame, textvariable=self.input_file_path, width=100)
         input_entry.grid(row=0, column=1, sticky='EW', **padding_options)
-        ttk.Button(main_frame, text="Browse", command=self.browse_file).grid(row=0, column=2, sticky='W', **padding_options)
+        ttk.Button(main_frame.scrollable_frame, text="Browse", command=self.browse_file).grid(row=0, column=2, sticky='W', **padding_options)
         
         # Output File Selection
-        ttk.Label(main_frame, text="Output File:").grid(row=1, column=0, sticky='W', **padding_options)
-        output_entry = ttk.Entry(main_frame, textvariable=self.output_file_path, width=70)
+        ttk.Label(main_frame.scrollable_frame, text="Output File:").grid(row=1, column=0, sticky='W', **padding_options)
+        output_entry = ttk.Entry(main_frame.scrollable_frame, textvariable=self.output_file_path, width=100)
         output_entry.grid(row=1, column=1, sticky='EW', **padding_options)
-        ttk.Button(main_frame, text="Save As", command=self.save_file).grid(row=1, column=2, sticky='W', **padding_options)
+        ttk.Button(main_frame.scrollable_frame, text="Save As", command=self.save_file).grid(row=1, column=2, sticky='W', **padding_options)
         
         # Language Variant Selection
-        ttk.Label(main_frame, text="Language Variant:").grid(row=2, column=0, sticky='W', **padding_options)
+        ttk.Label(main_frame.scrollable_frame, text="Language Variant:").grid(row=2, column=0, sticky='W', **padding_options)
         language_combo = ttk.Combobox(
-            main_frame, 
+            main_frame.scrollable_frame, 
             textvariable=self.language_variant, 
             values=["American English", "British English"], 
             state="readonly",
-            width=67
+            width=97
         )
         language_combo.grid(row=2, column=1, sticky='W', **padding_options)
         
         # OpenAI API Key Entry
-        ttk.Label(main_frame, text="OpenAI API Key:").grid(row=3, column=0, sticky='W', **padding_options)
-        api_key_entry = ttk.Entry(main_frame, textvariable=self.api_key, width=70, show="*")
+        ttk.Label(main_frame.scrollable_frame, text="OpenAI API Key:").grid(row=3, column=0, sticky='W', **padding_options)
+        api_key_entry = ttk.Entry(main_frame.scrollable_frame, textvariable=self.api_key, width=100, show="*")
         api_key_entry.grid(row=3, column=1, sticky='EW', **padding_options)
         
         # Model Selection
-        ttk.Label(main_frame, text="Select Model:").grid(row=4, column=0, sticky='W', **padding_options)
+        ttk.Label(main_frame.scrollable_frame, text="Select Model:").grid(row=4, column=0, sticky='W', **padding_options)
         model_combo = ttk.Combobox(
-            main_frame, 
+            main_frame.scrollable_frame, 
             textvariable=self.model_choice, 
             values=["gpt-3.5-turbo", "gpt-4o-mini"],  # Model options
             state="readonly",
-            width=67
+            width=97
         )
         model_combo.grid(row=4, column=1, sticky='W', **padding_options)
         model_combo.bind("<<ComboboxSelected>>", self.update_max_tokens_limit)
         
-        # Total Token Limit Display
-        ttk.Label(main_frame, text="Total Tokens Selected:").grid(row=5, column=0, sticky='W', **padding_options)
-        # Assign the selected tokens label to an instance variable for later configuration
-        self.selected_token_label_widget = ttk.Label(main_frame, textvariable=self.selected_tokens, foreground="black")
-        self.selected_token_label_widget.grid(row=5, column=1, sticky='W', **padding_options)
+        # Document Type Selection with Examples in the Name
+        ttk.Label(main_frame.scrollable_frame, text="Document Type:").grid(row=5, column=0, sticky='W', **padding_options)
         
-        ttk.Label(main_frame, text="Max Token Limit:").grid(row=5, column=2, sticky='W', **padding_options)
-        self.max_token_label = ttk.Label(main_frame, textvariable=self.max_total_tokens)
-        self.max_token_label.grid(row=5, column=3, sticky='W', **padding_options)
+        # Create a list of display names with examples
+        display_document_types = [
+            f"{doc_type} ({examples})" for doc_type, examples in DOCUMENT_TYPES.items()
+        ]
+        
+        document_type_combo = ttk.Combobox(
+            main_frame.scrollable_frame,
+            textvariable=self.document_type,
+            values=display_document_types,
+            state="readonly",
+            width=97
+        )
+        document_type_combo.grid(row=5, column=1, sticky='W', **padding_options)
+        document_type_combo.bind("<<ComboboxSelected>>", self.load_selected_prompt)
+        
+        # Set the default selection in the Combobox
+        document_type_combo.current(0)  # Select the first document type by default
+        
+        # Prompt Text Box
+        ttk.Label(main_frame.scrollable_frame, text="Prompt:").grid(row=6, column=0, sticky='NW', **padding_options)
+        self.prompt_text = tk.Text(main_frame.scrollable_frame, width=120, height=15, wrap='word')
+        self.prompt_text.grid(row=6, column=1, columnspan=2, sticky='W', **padding_options)
+        self.load_selected_prompt()  # Load the prompt for the default document type
+        
+        # Total Token Limit Display
+        ttk.Label(main_frame.scrollable_frame, text="Total Tokens Selected:").grid(row=7, column=0, sticky='W', **padding_options)
+        # Assign the selected tokens label to an instance variable for later configuration
+        self.selected_token_label_widget = ttk.Label(main_frame.scrollable_frame, textvariable=self.selected_tokens, foreground="black")
+        self.selected_token_label_widget.grid(row=7, column=1, sticky='W', **padding_options)
+        
+        ttk.Label(main_frame.scrollable_frame, text="Max Token Limit:").grid(row=7, column=2, sticky='W', **padding_options)
+        self.max_token_label = ttk.Label(main_frame.scrollable_frame, textvariable=self.max_total_tokens)
+        self.max_token_label.grid(row=7, column=3, sticky='W', **padding_options)
 
-        ttk.Label(main_frame, text="Total Tokens in File:").grid(row=6, column=0, sticky='W', **padding_options)
-        total_token_label = ttk.Label(main_frame, textvariable=self.total_tokens)
-        total_token_label.grid(row=6, column=1, sticky='W', **padding_options)
-
+        ttk.Label(main_frame.scrollable_frame, text="Total Tokens in File:").grid(row=8, column=0, sticky='W', **padding_options)
+        total_token_label = ttk.Label(main_frame.scrollable_frame, textvariable=self.total_tokens)
+        total_token_label.grid(row=8, column=1, sticky='W', **padding_options)
         
         # Select All Paragraphs Checkbox
         select_all_checkbox = ttk.Checkbutton(
-            main_frame, 
+            main_frame.scrollable_frame, 
             text="Select All Paragraphs", 
             variable=self.select_all_var, 
             command=self.toggle_select_all
         )
-        select_all_checkbox.grid(row=7, column=0, sticky='W', **padding_options)
+        select_all_checkbox.grid(row=9, column=0, sticky='W', **padding_options)
         
         # Paragraph Selection Listbox with Scrollbar
-        ttk.Label(main_frame, text="Select Paragraphs to Process:").grid(row=8, column=0, sticky='NW', **padding_options)
+        ttk.Label(main_frame.scrollable_frame, text="Select Paragraphs to Process:").grid(row=10, column=0, sticky='NW', **padding_options)
         
-        listbox_frame = ttk.Frame(main_frame)
-        listbox_frame.grid(row=8, column=1, columnspan=2, sticky='NSEW', **padding_options)
+        listbox_frame = ttk.Frame(main_frame.scrollable_frame)
+        listbox_frame.grid(row=10, column=1, columnspan=2, sticky='NSEW', **padding_options)
         
         # Configure listbox_frame grid
         listbox_frame.grid_rowconfigure(0, weight=1)
@@ -134,8 +182,8 @@ class GrammarCorrectorGUI:
         self.paragraph_listbox = tk.Listbox(
             listbox_frame, 
             selectmode=tk.MULTIPLE, 
-            width=100, 
-            height=15, 
+            width=150, 
+            height=10, 
             yscrollcommand=scrollbar.set
         )
         scrollbar.config(command=self.paragraph_listbox.yview)
@@ -144,16 +192,16 @@ class GrammarCorrectorGUI:
         self.paragraph_listbox.bind('<<ListboxSelect>>', self.update_selected_tokens)
         
         # Progress Bar
-        self.progress = ttk.Progressbar(main_frame, length=800, mode='determinate')
-        self.progress.grid(row=9, column=0, columnspan=4, pady=20, sticky='EW')
+        self.progress = ttk.Progressbar(main_frame.scrollable_frame, length=1100, mode='determinate')
+        self.progress.grid(row=11, column=0, columnspan=4, pady=20, sticky='EW')
         
         # Run Correction Button
         run_button = ttk.Button(
-            main_frame, 
+            main_frame.scrollable_frame, 
             text="Run Grammar Correction",  
             command=self.run_correction_thread
         )
-        run_button.grid(row=10, column=0, columnspan=4, pady=10)
+        run_button.grid(row=12, column=0, columnspan=4, pady=10)
         
     def browse_file(self):
         file_path = filedialog.askopenfilename(
@@ -241,14 +289,39 @@ class GrammarCorrectorGUI:
     
     def update_max_tokens_limit(self, event=None):
         model = self.model_choice.get()
+        logger.info(f"Selected model: '{model}'")  # Debugging statement
         if model == "gpt-3.5-turbo":
             self.max_total_tokens.set(20000)  # Example limit for GPT-3.5-turbo
         elif model == "gpt-4o-mini":
             self.max_total_tokens.set(30000)  # Example limit for GPT-4o-mini
         else:
             self.max_total_tokens.set(10000)  # Default limit
-        logger.info(f"Max token limit set to: {self.max_total_tokens.get()}")
+        logger.info(f"Max token limit set to: {self.max_total_tokens.get()}")  # Debugging statement
         self.recalculate_all_tokens()  # Recalculate tokens based on new limits
+    
+    def load_selected_prompt(self, event=None):
+        """
+        Loads the prompt corresponding to the selected document type into the prompt text box.
+        """
+        # Extract the document type from the selected Combobox value
+        selected_display = self.document_type.get()
+        # The display is in the format: "Document Type (Examples)"
+        doc_type = selected_display.split(" (")[0]
+        
+        # Retrieve the corresponding prompt
+        prompt = self.current_prompts.get(doc_type, "")
+        
+        # Load the prompt into the text box
+        self.prompt_text.config(state='normal')  # Make the text widget editable
+        self.prompt_text.delete('1.0', tk.END)  # Clear previous content
+        self.prompt_text.insert(tk.END, prompt.strip())
+        self.prompt_text.config(state='normal')  # Keep it editable
+    
+    def get_custom_prompt(self, text):
+        """
+        Retrieves the prompt based on the selected document type and user edits.
+        """
+        return self.prompt_text.get("1.0", tk.END).strip().format(text=text, language_variant=self.language_variant.get())
     
     def update_token_display(self):
         selected = self.selected_tokens.get()
@@ -319,10 +392,14 @@ class GrammarCorrectorGUI:
         # Initialize API client
         api_client = GrammarCorrectorAPI(api_key, language, model=self.model_choice.get())
         
+        # Get the prompt template
+        prompt_template = self.prompt_text.get("1.0", tk.END).strip()
+        logger.info("Successfully loaded custom prompt template")
+        
         # Process paragraphs asynchronously
         try:
             corrected_paragraphs, unprocessed = asyncio.run(
-                api_client.correct_paragraphs(selected_paragraphs, max_token_limit, self.update_progress)
+                api_client.correct_paragraphs(selected_paragraphs, max_token_limit, self.update_progress, prompt_template)
             )
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred during correction: {e}")
@@ -359,3 +436,8 @@ class GrammarCorrectorGUI:
 
     def run(self):
         self.root.mainloop()
+
+# To run the GUI, create an instance of GrammarCorrectorGUI and call the run method.
+if __name__ == "__main__":
+    app = GrammarCorrectorGUI()
+    app.run()
