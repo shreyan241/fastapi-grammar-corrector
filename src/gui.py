@@ -5,15 +5,15 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import threading
 import asyncio
-from api_client import GrammarCorrectorAPI
-from text_processing import split_into_paragraphs
-from file_handlers import extract_text
-from output_manager import save_corrected_document
-from cache_manager import clear_cache
-from document_types import DOCUMENT_TYPES
-from prompts import DOCUMENT_PROMPTS, get_doc_prompt
-from utils import count_tokens
-from config import (
+from src.api_client import GrammarCorrectorAPI
+from src.text_processing import split_into_paragraphs
+from src.file_handlers import extract_text
+from src.output_manager import save_corrected_document
+from src.cache_manager import clear_cache
+from src.document_types import DOCUMENT_TYPES
+from src.prompts import DOCUMENT_PROMPTS, get_doc_prompt
+from src.utils import count_tokens
+from src.config import (
     DEFAULT_CONTEXT_WINDOW_SIZE, DEFAULT_TOKEN_LIMIT, MIN_CONTEXT_WINDOW_SIZE, MAX_CONTEXT_WINDOW_SIZE,
     DEFAULT_TEMPERATURE, MIN_TEMPERATURE, MAX_TEMPERATURE, DEFAULT_DOCUMENT_TYPE,
     DEFAULT_LANGUAGE_VARIANT, DEFAULT_MODEL, DEFAULT_GPT35_TOKEN_LIMIT,

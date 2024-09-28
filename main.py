@@ -1,6 +1,6 @@
 # main.py
 
-from gui import GrammarCorrectorGUI
+from src.gui import GrammarCorrectorGUI
 
 def main():
     app = GrammarCorrectorGUI()

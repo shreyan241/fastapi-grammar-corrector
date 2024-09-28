@@ -2,10 +2,10 @@
 
 import asyncio
 import aiohttp
-from cache_manager import get_from_cache, save_to_cache
-from utils import count_tokens
-from prompts import get_doc_prompt
-from config import (DEFAULT_CONTEXT_WINDOW_SIZE, DEFAULT_TEMPERATURE, DEFAULT_BACKOFF_FACTOR,
+from src.cache_manager import get_from_cache, save_to_cache
+from src.utils import count_tokens
+from src.prompts import get_doc_prompt
+from src.config import (DEFAULT_CONTEXT_WINDOW_SIZE, DEFAULT_TEMPERATURE, DEFAULT_BACKOFF_FACTOR,
                     DEFAULT_MAX_RETRIES, DEFAULT_RATE_LIMIT, DEFAULT_MODEL,DEFAULT_RATE_PERIOD,
                     DEFAULT_LANGUAGE_VARIANT)
 from loguru import logger

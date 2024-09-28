@@ -2,7 +2,6 @@
 
 from docx import Document
 import pdfplumber
-import re
 
 def extract_text(file_path):
     extension = file_path.split('.')[-1].lower()
