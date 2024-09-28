@@ -4,7 +4,10 @@ from loguru import logger
 COMMON_PROMPT_START = """You are an expert proofreader and editor, highly skilled in {language_variant} grammar, spelling, and style. Your task is to correct the following {doc_type} document, ensuring it adheres to {language_variant} conventions. Please follow these guidelines:"""
 
 CONTEXT_PROMPT = """
-Keep in mind the style, tense, and grammar of the corrected versions of the previous paragraphs to maintain consistency:
+Consider the style, tense, and grammar used in previous paragraphs for consistency. Pay attention to:
+
+1. Writing style (e.g., formal, technical)
+2. Tenses and grammatical structures used
 
 {context}
 
@@ -172,13 +175,5 @@ def get_doc_prompt(doc_type, context, text, language_variant, custom_prompt=None
         context=context,
         text=text
     )
-    
-    # Add logging for a sanity check
-    logger.info(f"Generating prompt for document type: {doc_type}")
-    logger.info(f"Language variant: {language_variant}")
-    logger.info(f"Context provided: {'Yes' if context else 'No'}")
-    logger.info(f"Custom prompt provided: {'Yes' if custom_prompt else 'No'}")
-    logger.info(f"Text length: {len(text)} characters")
-    logger.info(f"Generated prompt length: {len(full_prompt)} characters")
-    logger.info(f"Generated prompt: {full_prompt}")
+    logger.info(f"Generated custom prompt of length: {len(full_prompt)} characters")
     return full_prompt
