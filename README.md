@@ -21,15 +21,15 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 
 ## Installation
 
-### Option 1: Executable Version (Windows)
+### Executable Version (Windows)
 
-1. Download the latest release of gpt-grammar-corrector from the [Releases](https://github.com/shreyan241/grammar_corrector/releases) page.
+1. Download the `GrammarCorrector-v1.0.zip` file from this repository.
 2. Extract the contents of the zip file to a folder of your choice.
 3. Run `GrammarCorrector.exe` to start the application.
 
 **Note:** The executable version does not require Python or any additional dependencies to be installed on your system.
 
-### Option 2: From Source
+### From Source
 
 #### Prerequisites
 
