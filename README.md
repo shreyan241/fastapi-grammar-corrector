@@ -19,6 +19,12 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 - **Customizable Settings:** Adjust parameters like context window size and temperature.
 - **Detailed Logging:** Utilizes `loguru` for comprehensive logging to aid in debugging and monitoring.
 
+## Demo
+
+Check out the demo video of the GUI application.
+
+![Grammar Corrector Demo](demo/grammar_demo_fast.gif)
+
 ## Installation
 
 ### Executable Version (Windows)
