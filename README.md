@@ -21,12 +21,22 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 
 ## Installation
 
-### Prerequisites
+### Option 1: Executable Version (Windows)
+
+1. Download the latest release of gpt-grammar-corrector from the [Releases](https://github.com/shreyan241/grammar_corrector/releases) page.
+2. Extract the contents of the zip file to a folder of your choice.
+3. Run `GrammarCorrector.exe` to start the application.
+
+**Note:** The executable version does not require Python or any additional dependencies to be installed on your system.
+
+### Option 2: From Source
+
+#### Prerequisites
 
 - Python 3.12 or higher
 - An OpenAI API key
 
-### Steps
+#### Steps
 
 1. Clone the repository:
    ```
@@ -46,7 +56,7 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 
 ## Usage
 
-1. Launch the application by running `main.py`.
+1. Launch the application by running `GrammarCorrector.exe` (for the executable version) or `python main.py` (if running from source).
 2. Select the input file (`.docx`, `.pdf`, or `.txt`).
 3. Choose the output file location.
 4. Select the language variant (American or British English).
@@ -59,9 +69,9 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 
 ## Configuration
 
-- Adjust settings in `config.py` for default values like context window size, temperature, rate limits, etc.
-- Customize document type prompts in `prompts.py`.
-- Modify caching behavior in `cache_manager.py`.
+- Adjust settings in `config.py` for default values like context window size, temperature, rate limits, etc. (Only applicable when running from source)
+- Customize document type prompts in `prompts.py`. (Only applicable when running from source)
+- Modify caching behavior in `cache_manager.py`. (Only applicable when running from source)
 
 ## Additional Notes
 
@@ -69,7 +79,20 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 - A caching mechanism is implemented to avoid redundant API calls.
 - Comprehensive error handling and logging are in place for troubleshooting.
 
+## System Requirements (for Executable Version)
+
+- Windows 10 or later
+- 4GB RAM recommended
+- Approximately 100MB of free disk space
+
+## Troubleshooting
+
+If you encounter any issues with the executable:
+1. Ensure you have extracted all files from the zip archive.
+2. Try running the application as an administrator.
+3. Check your antivirus software isn't blocking the application.
+4. For detailed error logs, check the `grammar_corrector.log` file in the application directory.
+
 ## Contributing
 
 Contributions to improve the Grammar Corrector are welcome. Please feel free to submit pull requests or open issues for bugs and feature requests.
-
