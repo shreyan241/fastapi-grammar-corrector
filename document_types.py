@@ -9,5 +9,6 @@ DOCUMENT_TYPES = {
     "Personal": "Letters, personal emails, diaries, resumes, cover letters, etc.",
     "Medical": "Medical reports, case studies, prescriptions, patient notes, etc.",
     "Marketing": "Brochures, advertisements, promotional content, email campaigns, etc.",
-    "Financial": "Invoices, financial reports, tax documents, investment statements, etc."
+    "Financial": "Invoices, financial reports, tax documents, investment statements, etc.",
+    "Other": "Any other document type not listed"
 }
