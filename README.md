@@ -1,98 +1,75 @@
 # Grammar Corrector
 
-A Python-based GUI application that corrects grammar, spelling, and style in Word documents (`.docx`), PDFs (`.pdf`), and plain text files (`.txt`) using OpenAI's GPT models.
+A Python-based GUI application that corrects English grammar, spelling, and style in Word documents (`.docx`), PDFs (`.pdf`), and plain text files (`.txt`) using OpenAI's GPT models.
 
 ## Features
 
-- **Supports Multiple File Formats:** Easily process Word documents, PDFs, and TXT files.
+- **Multi-Format Support:** Process Word documents, PDFs, and TXT files.
 - **Paragraph-Based Processing:** Maintains context by processing text paragraph by paragraph.
 - **Document Type Customization:**
-  - **Document Type Selection:** Choose from various document types (e.g., Legal, Medical, Academic) with embedded examples for clarity.
+  - **Extensive Document Type Selection:** Choose from various document types (e.g., Legal, Editorial, Medical, Academic, Business, Technical, Creative, Personal, Marketing, Financial) with embedded guidelines for each.
   - **Customizable Prompts:** Edit the correction prompts directly within the GUI to tailor the correction process to specific needs.
-- **Caching Mechanism:** Avoids redundant API calls by caching previously processed texts, enhancing efficiency and reducing costs.
-- **Rate Limiting:** Adheres to OpenAI's API rate limits using asynchronous rate limiting to prevent errors and ensure smooth operation.
-- **User-Friendly GUI:** Intuitive and responsive interface built with Tkinter, featuring scrollable frames and progress indicators.
-- **Secure API Key Handling:** Masks API key input to protect user credentials.
-- **Real-Time Progress Tracking:** Visual progress bar updates to inform users about the correction process status.
-- **Error Handling and Notifications:** Provides clear error messages and warnings for issues like token limits or API errors.
-- **Flexible Output Options:** Save corrected documents in the desired format and location with ease.
-- **Logging:** Utilizes `loguru` for detailed logging to aid in debugging and monitoring.
+- **Efficient Caching Mechanism:** Avoids redundant API calls by caching previously processed texts, enhancing efficiency and reducing costs.
+- **Smart Rate Limiting:** Adheres to OpenAI's API rate limits using asynchronous rate limiting to prevent errors and ensure smooth operation.
+- **Language Variant Support:** Choose between American English and British English for corrections.
+- **Model Selection:** Option to select different GPT models based on user preference and API access.
+- **Selective Paragraph Processing:** Ability to choose specific paragraphs for correction or process the entire document.
+- **Context-Aware Corrections:** Uses previous paragraphs as context for maintaining consistency in corrections.
+- **Token Management:** Intelligent handling of token limits with tracking of unprocessed paragraphs.
+- **Customizable Settings:** Adjust parameters like context window size and temperature.
+- **Detailed Logging:** Utilizes `loguru` for comprehensive logging to aid in debugging and monitoring.
 
 ## Installation
 
 ### Prerequisites
 
-- **Python 3.7 or higher** installed on your system. You can download it from [Python's official website](https://www.python.org/downloads/).
+- Python 3.12 or higher
+- An OpenAI API key
 
 ### Steps
 
-1. **Clone the Repository**
-
+1. Clone the repository:
    ```
    git clone https://github.com/yourusername/grammar_corrector.git
    cd grammar_corrector
    ```
 
-2. **Create and activate Virtual Environment (Optional but Recommended)**
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-    ```
-    python -m venv venv
-    ```
+3. Run the application:
+   ```
+   python main.py
+   ```
 
-    - On Windows
-    ```
-    venv\Scripts\activate
-    ```
-
-    - On Linux
-    ```
-    source venv/bin/activate
-    ```
-
-3. Install Dependencies
-    ```
-    pip install -r requirements.txt
-    ```
-
-4. Run the Application
-    ```
-    python main.py
-    ```
 ## Usage
-- Select Input File: Click on the Browse button to select a .docx, .pdf, or .txt file you wish to correct.
-- Specify Output File: The application automatically suggests a default output file name. You can change it by clicking Save As.
-- Choose Language Variant: Select between American English and British English to align corrections with your preferred language style.
-- Enter OpenAI API Key: Input your OpenAI API key. This field is masked for security.
-- Select Model: Choose the desired GPT model (e.g., gpt-3.5-turbo, gpt-4o-mini) based on your requirements and API access.
-- Select Document Type: Choose the type of document you're processing (e.g., Legal, Medical). Each option includes examples for better understanding.
-- Customize Prompt (Optional): The Prompt text box displays the default correction guidelines based on the selected document type. You can edit this prompt to customize the correction behavior.
-- Select Paragraphs to Process: Use the listbox to select specific paragraphs for correction or click Select All Paragraphs to process the entire document.
-- Run Grammar Correction: Click the Run Grammar Correction button to start the process. A progress bar will indicate the correction status.
-- Completion: Upon completion, a success message will confirm the corrected file's location. If any paragraphs weren't processed due to token limits, a warning will notify you.
+
+1. Launch the application by running `main.py`.
+2. Select the input file (`.docx`, `.pdf`, or `.txt`).
+3. Choose the output file location.
+4. Select the language variant (American or British English).
+5. Enter your OpenAI API key.
+6. Choose the GPT model.
+7. Select the document type from the available options.
+8. Optionally customize the correction prompt.
+9. Select paragraphs to process or choose to process all.
+10. Click "Run Grammar Correction" to start the process.
 
 ## Configuration
-### OpenAI API Key
-Ensure you have a valid OpenAI API key. You can obtain one by signing up at OpenAI's website.
 
-### Prompt Customization
-The application uses predefined prompts tailored to specific document types. To further customize:
-
-### Edit Prompt
-Modify the text within the Prompt box in the GUI to adjust correction guidelines as needed.
-
-### Save Custom Prompts (Advanced):
-For persistent changes, consider enhancing the application to save custom prompts to a configuration file.
+- Adjust settings in `config.py` for default values like context window size, temperature, rate limits, etc.
+- Customize document type prompts in `prompts.py`.
+- Modify caching behavior in `cache_manager.py`.
 
 ## Additional Notes
 
-### Logging:
-The application uses loguru for logging. Logs are saved to grammar_corrector.log in the project directory, which is useful for debugging and monitoring.
+- The application uses asynchronous processing for efficient API usage.
+- A caching mechanism is implemented to avoid redundant API calls.
+- Comprehensive error handling and logging are in place for troubleshooting.
 
-### Caching:
-Processed paragraphs are cached to optimize performance and reduce API usage. The caching mechanism ensures that identical texts aren't processed multiple times.
+## Contributing
 
-### Rate Limiting:
-The application respects OpenAI's rate limits using aiolimiter, preventing excessive requests that could lead to errors or throttling.
+Contributions to improve the Grammar Corrector are welcome. Please feel free to submit pull requests or open issues for bugs and feature requests.
 
-### Error Handling:
-Comprehensive error messages guide users in resolving issues like missing API keys, unsupported file formats, or exceeding token limits.
