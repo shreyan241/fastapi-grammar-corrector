@@ -83,7 +83,7 @@ A Python-based GUI application that corrects English grammar, spelling, and styl
 
 - Windows 10 or later
 - 4GB RAM recommended
-- Approximately 100MB of free disk space
+- Approximately 200MB of free disk space
 
 ## Troubleshooting
 
