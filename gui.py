@@ -14,7 +14,7 @@ from document_types import DOCUMENT_TYPES
 from prompts import DOCUMENT_PROMPTS, get_doc_prompt
 from utils import count_tokens
 from config import (
-    DEFAULT_CONTEXT_WINDOW_SIZE, MIN_CONTEXT_WINDOW_SIZE, MAX_CONTEXT_WINDOW_SIZE,
+    DEFAULT_CONTEXT_WINDOW_SIZE, DEFAULT_TOKEN_LIMIT, MIN_CONTEXT_WINDOW_SIZE, MAX_CONTEXT_WINDOW_SIZE,
     DEFAULT_TEMPERATURE, MIN_TEMPERATURE, MAX_TEMPERATURE, DEFAULT_DOCUMENT_TYPE,
     DEFAULT_LANGUAGE_VARIANT, DEFAULT_MODEL, DEFAULT_GPT35_TOKEN_LIMIT,
     DEFAULT_GPT4_TOKEN_LIMIT
@@ -132,6 +132,7 @@ class GrammarCorrectorGUI:
         ttk.Label(main_frame.scrollable_frame, text="Model:").grid(row=2, column=2, sticky='W', **padding_options)
         model_combo = ttk.Combobox(main_frame.scrollable_frame, textvariable=self.model_choice, values=["gpt-3.5-turbo", "gpt-4o-mini"], state="readonly", width=20)
         model_combo.grid(row=2, column=3, sticky='W', **padding_options)
+        model_combo.bind("<<ComboboxSelected>>", self.update_max_tokens_limit)
         
         # API Key Entry
         ttk.Label(main_frame.scrollable_frame, text="OpenAI API Key:").grid(row=3, column=0, sticky='W', **padding_options)
@@ -360,6 +361,8 @@ class GrammarCorrectorGUI:
             self.max_total_tokens.set(DEFAULT_TOKEN_LIMIT)
         logger.info(f"Max token limit set to: {self.max_total_tokens.get()}")  # Debugging statement
         self.recalculate_all_tokens()  # Recalculate tokens based on new limits
+        self.update_token_display()
+
     
     def load_selected_prompt(self, event=None):
         """
@@ -460,7 +463,7 @@ class GrammarCorrectorGUI:
             user_response = messagebox.askokcancel(
             "Token Limit Exceeded",
             f"The selected paragraphs have {selected_tokens} tokens, which exceeds the maximum allowed {max_token_limit} tokens.\n"
-            f"Only the first {paragraphs_to_process} paragraphs (totaling {cumulative_tokens} tokens) will be processed.\n\n"
+            f"Only the first {paragraphs_to_process} selectedparagraphs (totaling {cumulative_tokens} tokens) will be processed.\n\n"
             "Do you want to continue?",
             icon=messagebox.WARNING
         )
