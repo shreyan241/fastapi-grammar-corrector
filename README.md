@@ -1,4 +1,4 @@
-# Grammar Corrector
+# GPT Document Proofreader
 
 A Python-based GUI application that corrects English grammar, spelling, and style in Word documents (`.docx`), PDFs (`.pdf`), and plain text files (`.txt`) using OpenAI's GPT models.
 
